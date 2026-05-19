@@ -1,0 +1,6 @@
+bleak>=0.21
+vgamepad>=0.1.0
+PySide6>=6.6
+
+# Optional (alternative host MAC source):
+# pybluez

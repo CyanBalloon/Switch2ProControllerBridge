@@ -19,7 +19,7 @@ Upstream **TommyWabg/switch2-controllers-windows10-gyro** is distributed under t
 
 When you distribute source or binaries that include the derived `bridge/` protocol code described below, retain the MIT license notice and the above copyright lines in accordance with that license.
 
-This repository’s **original** files (GUI, build scripts, tray, etc.) are provided under the same terms as the rest of this project unless you add a separate license file at the repo root.
+This repository’s **original** files (GUI, build scripts, tray, etc.) are licensed under the [MIT License](LICENSE) at the repo root.
 
 ## `bridge/` file mapping
 
@@ -79,4 +79,4 @@ This project uses **[ViGEmBus](https://github.com/nefarius/ViGEmBus)** and **[vg
 
 ## Suggested notice in distributions
 
-If you ship binaries or source archives, include a copy of this file (or the MIT notice from TommyWabg’s `LICENSE.md` plus Nadeflore attribution) in your distribution package.
+If you ship binaries or source archives, include a copy of this file, [LICENSE](LICENSE), and (for derived protocol code) the MIT notice from TommyWabg’s `LICENSE.md` plus Nadeflore attribution.

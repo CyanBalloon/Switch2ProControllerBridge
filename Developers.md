@@ -7,7 +7,7 @@ BLE pairing and protocol code in `bridge/` is derived from [Nadeflore/switch2-co
 | UI | Run from source | Build | `.exe` size | Packages |
 |----|-----------------|-------|-------------|----------|
 | **Lite** | `python main.py` | `build-lite.bat` | ~20-40 MB | **bundled** in exe |
-| **Fancy** | `python main.py --fancy` | `build.bat` | ~8-15 MB | **user `pip install`** (same Python version) |
+| **Fancy** | `python main.py --fancy` | `build.bat` | ~8-15 MB exe | **user `pip install`** (~650–700 MB on disk; see below) |
 
 ## Fancy `.exe` — how it works
 
@@ -25,6 +25,19 @@ BLE pairing and protocol code in `bridge/` is derived from [Nadeflore/switch2-co
 2. [Python](https://www.python.org/downloads/) — **same version as the build** (see build output / `Install dependencies.bat`)
 3. Run **`Install dependencies.bat`** once in `dist\` (or `pip install -r requirements-fancy.txt`)
 4. Run **`Switch2Bridge.exe`**
+
+**Fancy dependency disk space** (`requirements-fancy.txt`, measured in a clean venv on Windows, Python 3.14):
+
+| Installed component | Approx. size |
+|--------------------|----------------|
+| **Total** `site-packages` | **~670 MB** |
+| PySide6 (Essentials + Addons + WebEngine) | ~630 MB |
+| Pillow | ~15 MB |
+| bleak + `winrt-*` (Bleak WinRT backend) | ~5 MB |
+| vgamepad | ~2 MB |
+| pystray, shiboken6, other small deps | ~5 MB |
+
+PySide6 dominates because the Fancy UI uses **Qt WebEngine**. The Fancy onefile exe stays small because these packages are **not** bundled—they are loaded from the user’s Python environment at runtime.
 
 ### End users (Lite `.exe`)
 

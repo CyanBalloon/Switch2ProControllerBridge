@@ -11,6 +11,8 @@ ui_dir = project_root / "ui"
 app_datas = [
     (str(project_root / "main.py"), "."),
     (str(project_root / "gui.py"), "."),
+    (str(project_root / "requirements-fancy.txt"), "."),
+    (str(project_root / "python_version.txt"), "."),
     (str(project_root / "bridge"), "bridge"),
     (str(ui_dir / "index.html"), "ui"),
     (str(ui_dir / "styles.css"), "ui"),

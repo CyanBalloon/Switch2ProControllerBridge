@@ -11,7 +11,7 @@ import json
 import sys
 
 from bridge.gui_host import BridgeHost
-from bridge.logging_config import log_debug, setup_logging
+from bridge.logging_config import log_debug, log_exception, setup_logging
 from bridge.paths import bundle_root, tray_ico_path
 
 UI_DIR = bundle_root() / "ui"
@@ -163,12 +163,16 @@ def launch() -> None:
         from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget
         from PySide6.QtWebEngineWidgets import QWebEngineView
         from PySide6.QtWebEngineCore import QWebEngineProfile, QWebEngineSettings
-    except ImportError:
-        print(
-            "\n✗  PySide6 is not installed (needed for the Fancy interface).\n"
-            "   Run: pip install -r requirements-fancy.txt\n",
-            file=sys.stderr,
+    except ImportError as exc:
+        msg = (
+            f"PySide6 / Qt WebEngine failed to import: {exc}\n"
+            "Run Install dependencies.bat in the folder with Switch2Bridge.exe"
         )
+        try:
+            setup_logging()
+            log_exception(msg)
+        except Exception:
+            print(f"\n✗  {msg}\n", file=sys.stderr)
         sys.exit(1)
 
     if not INDEX_HTML.is_file():

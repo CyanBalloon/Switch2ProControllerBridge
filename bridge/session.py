@@ -14,7 +14,7 @@ from bleak.backends.scanner import AdvertisementData
 
 from bridge.constants import BRIDGE_VERSION, NINTENDO_BLUETOOTH_MANUFACTURER_ID
 from bridge.controller import Switch2Controller
-from bridge.logging_config import LOG_FILE, log, log_debug, log_exception, setup_logging
+from bridge.logging_config import LOG_FILE, file_logging_enabled, log, log_debug, log_exception, setup_logging
 from bridge.mac_host import classify_controller_advertisement, get_host_mac_info
 from bridge.utils import decodeu
 
@@ -80,7 +80,10 @@ async def discover_and_run(
     log("\nScanning for Switch 2 Pro Controller…")
     log("  → First time: hold SYNC until all 4 LEDs flash")
     log("  → Already paired: press any button to connect")
-    log(f"  → Full debug log: {LOG_FILE}\n")
+    if file_logging_enabled() and LOG_FILE is not None:
+        log(f"  → Full debug log: {LOG_FILE}\n")
+    else:
+        log("")
 
     while not shutdown_event.is_set():
         if not scan_enabled.is_set():

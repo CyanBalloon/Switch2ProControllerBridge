@@ -112,6 +112,14 @@ if __name__ == "__main__":
 
     except Exception as exc:
 
+        try:
+
+            log_exception(f"Unexpected error: {exc}")
+
+        except Exception:
+
+            pass
+
         print(f"\n✗  Unexpected error: {exc}")
 
         traceback.print_exc()
@@ -125,4 +133,6 @@ if __name__ == "__main__":
             except (EOFError, RuntimeError):
 
                 pass
+
+        sys.exit(1)
 

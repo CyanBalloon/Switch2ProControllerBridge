@@ -5,5 +5,5 @@ where python >nul 2>&1 || (
   pause
   exit /b 1
 )
-python -m pip install -r requirements-fancy.txt
+python -m pip install --no-cache-dir -r requirements-fancy.txt
 pythonw main.py --fancy

@@ -7,24 +7,28 @@ BLE pairing and protocol code in `bridge/` is derived from [Nadeflore/switch2-co
 | UI | Run from source | Build | `.exe` size | Packages |
 |----|-----------------|-------|-------------|----------|
 | **Lite** | `python main.py` | `build-lite.bat` | ~20-40 MB | **bundled** in exe |
-| **Fancy** | `python main.py --fancy` | `build.bat` | ~8-15 MB exe | **user `pip install`** (~650–700 MB on disk; see below) |
+| **Fancy** | `python main.py --fancy` | `build.bat` | ~8-15 MB exe | **auto `pip install` on first run** (~650–700 MB; see below) |
 
 ## Fancy `.exe` — how it works
 
-1. The `.exe` contains only the app source (`main.py`, `bridge/`, `ui/`, …) plus a small launcher runtime.
-2. It starts **`pythonw main.py --fancy`** using **your pip-installed** packages (same Python major.minor as the build).
-3. App files stay in a **temp folder** while running (PyInstaller onefile); **no `app/` folder** is created beside the `.exe`. Only **`logs/`** may appear there.
+1. The `.exe` contains app source (`main.py`, `bridge/`, `ui/`, `requirements-fancy.txt`, `python_version.txt`) plus a small launcher (`frozen_fancy.py`).
+2. On startup, the launcher finds the user’s **matching Python** (see `python_version.txt`). If packages are missing, it runs **`pip install -r requirements-fancy.txt`** automatically (console window shows progress).
+3. It then starts **`pythonw main.py --fancy`** from the bundled tree and waits (keeps `_MEIPASS` valid).
+4. No **`logs/`** folder is created beside release `.exe` files (logging is dev-only).
 
-**Important:** Build the `.exe` with the same Python you use for `pip install` (e.g. build with 3.14 → install deps with 3.14 → that Python on PATH).
+**Important:** Build with the Python version you expect end users to install (written to `python_version.txt` at build time).
 
 ## What to install
 
 ### End users (Fancy `.exe`)
 
 1. [ViGEmBus](https://github.com/nefarius/ViGEmBus/releases/latest)
-2. [Python](https://www.python.org/downloads/) — **same version as the build** (see build output / `Install dependencies.bat`)
-3. Run **`Install dependencies.bat`** once in `dist\` (or `pip install -r requirements-fancy.txt`)
-4. Run **`Switch2Bridge.exe`**
+2. [Python](https://www.python.org/downloads/) — **same version as `python_version.txt`** in the release zip
+3. Run **`Switch2Bridge.exe`** (first run installs pip packages automatically)
+
+Optional manual install: `scripts\install-fancy-deps.bat` (same steps as the launcher).
+
+Test auto-install: `scripts\uninstall-fancy-deps.bat` removes Fancy pip packages, then run `Switch2Bridge.exe` again.
 
 **Fancy dependency disk space** (`requirements-fancy.txt`, measured in a clean venv on Windows, Python 3.14):
 

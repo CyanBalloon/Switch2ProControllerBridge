@@ -1,5 +1,4 @@
-"""
-GUI host — Fancy UI (HTML/CSS in ``ui/``), rendered with Qt WebEngine (PySide6).
+"""GUI host — Fancy UI (HTML/CSS in ``ui/``), rendered with Qt WebEngine (PySide6).
 
 Edit ``ui/index.html``, ``styles.css``, and ``app.js`` to reskin the app.
 Requires: pip install PySide6  (see requirements-fancy.txt)
@@ -10,9 +9,9 @@ from __future__ import annotations
 import json
 import sys
 
-from bridge.gui_host import BridgeHost
+from bridge.session import BridgeHost
 from bridge.logging_config import log_debug, log_exception, setup_logging
-from bridge.paths import bundle_root, tray_ico_path
+from bridge.utils import bundle_root, tray_ico_path
 
 UI_DIR = bundle_root() / "ui"
 INDEX_HTML = (UI_DIR / "index.html").resolve()
@@ -21,11 +20,11 @@ WINDOW_HEIGHT = 400
 CARD_RADIUS = 28
 
 if sys.platform == "win32":
-    from bridge.tray_chrome import TrayChrome
-    from bridge import win_shell
+    from bridge.tray import TrayChrome
+    from bridge import tray as win_shell
 
 
-def _make_ui_bridge_api(host: "WebGuiHost"):
+def _make_ui_bridge_api(host: WebGuiHost):
     from PySide6.QtCore import QObject, Slot
 
     class Api(QObject):

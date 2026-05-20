@@ -1,6 +1,6 @@
-"""Minimal Tkinter GUI (Lite) — small builds, no pywebview / WebView2.
-
-Use: python main.py (default) or python main.py --lite
+"""
+Minimal Tkinter GUI (Lite) — small builds, no pywebview / WebView2.
+Use: python main.py  (default) or python main.py --lite
 """
 
 from __future__ import annotations
@@ -9,14 +9,16 @@ import sys
 import tkinter as tk
 from typing import Callable, Optional
 
-from bridge.session import BridgeHost
+from bridge.gui_host import BridgeHost
 from bridge.logging_config import setup_logging
-from bridge.utils import ACCENT, COPY, bundle_root, tray_ico_path
+from bridge.paths import bundle_root, tray_ico_path
+from bridge.ui_strings import ACCENT, COPY
 
 if sys.platform == "win32":
-    from bridge.tray import TrayChrome
-    from bridge import tray as win_shell
+    from bridge.tray_chrome import TrayChrome
+    from bridge import win_shell
 
+# Match ui/styles.css
 WINDOW_W = 420
 CONTENT_W = WINDOW_W - 28 * 2
 CARD_PAD_X = 28

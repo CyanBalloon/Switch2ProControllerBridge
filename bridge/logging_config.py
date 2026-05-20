@@ -5,7 +5,7 @@ import os
 import sys
 from pathlib import Path
 
-from bridge.paths import install_root, is_frozen
+from bridge.utils import install_root, is_frozen
 
 LOG_DIR = install_root() / "logs"
 LOG_FILE: Path | None = None

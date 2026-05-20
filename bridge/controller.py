@@ -1,14 +1,15 @@
 """Switch 2 Pro Controller BLE session and Xbox input mapping."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
-
 import vgamepad as vg
 from bleak import BleakClient, BleakGATTCharacteristic
 
-from bridge.ble_transport import request_throughput_mode
-from bridge.calibration import StickCalibration
-from bridge.constants import (
+from bridge.ble import request_throughput_mode, get_host_mac_info
+from bridge.logging_config import log, log_debug
+from bridge.utils import (
     BTN_A, BTN_B, BTN_DOWN, BTN_HOME, BTN_L, BTN_LEFT, BTN_LS, BTN_MINUS,
     BTN_PLUS, BTN_R, BTN_RIGHT, BTN_RS, BTN_UP, BTN_X, BTN_Y, BTN_ZL, BTN_ZR,
     CALIBRATION_JOYSTICK_L, CALIBRATION_JOYSTICK_R, CALIBRATION_USER_L, CALIBRATION_USER_R,
@@ -17,10 +18,24 @@ from bridge.constants import (
     SUBCOMMAND_MEMORY_READ, SUBCOMMAND_PAIR_FINISH, SUBCOMMAND_PAIR_LTK1, SUBCOMMAND_PAIR_LTK2,
     SUBCOMMAND_PAIR_SET_MAC, SUBCOMMAND_SET_PLAYER_LEDS,
     VIBRATION_WRITE_PRO_CONTROLLER_UUID,
+    deadzone, decodeu, get_stick_xy, apply_calibration
 )
-from bridge.logging_config import log, log_debug
-from bridge.mac_host import get_host_mac_info
-from bridge.utils import deadzone, decodeu, get_stick_xy
+
+
+class StickCalibration:
+    """Stick calibration from controller memory."""
+    def __init__(self, data: bytes):
+        center = get_stick_xy(data[0:3])
+        pos_range = get_stick_xy(data[3:6])
+        neg_range = get_stick_xy(data[6:9])
+        self.cx, self.cy = center
+        self.px, self.py = pos_range
+        self.nx, self.ny = neg_range
+
+    def normalize(self, raw: tuple[int, int]) -> tuple[float, float]:
+        x = deadzone(apply_calibration(raw[0], self.cx, self.px, self.nx))
+        y = deadzone(apply_calibration(raw[1], self.cy, self.py, self.ny))
+        return x, y
 
 
 class Switch2Controller:

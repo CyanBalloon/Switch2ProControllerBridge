@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Switch 2 Pro Controller → Virtual Xbox 360 Controller Bridge
 
-Run:  python main.py          (Lite — default)
-      python main.py --fancy  (Fancy UI, needs PySide6 via pip)
+Run:  python main.py
 
 See Developers.md for dependencies and build instructions.
 """
@@ -17,11 +16,6 @@ from bridge.utils import is_frozen, subprocess_hide_window
 
 
 def run_app():
-    if "--fancy" in sys.argv:
-        import gui
-        gui.launch()
-        return
-
     import gui_lite
     gui_lite.launch()
 

@@ -5,7 +5,9 @@ Matches the Fancy UI aesthetics exactly, featuring native DPI scaling and supers
 
 from __future__ import annotations
 
+import json
 import math
+from pathlib import Path
 import sys
 import tkinter as tk
 from typing import Callable, Optional
@@ -49,6 +51,31 @@ FONT_SEMIBOLD = "Segoe UI Semibold"
 
 _GLOW_CACHE: dict[tuple[str, int], ImageTk.PhotoImage] = {}
 _CONTROLLER_CACHE: dict[str, ImageTk.PhotoImage] = {}
+
+
+def get_settings_path() -> Path:
+    return Path("settings.json")
+
+
+def load_settings() -> dict:
+    path = get_settings_path()
+    defaults = {"startup": False, "minimized": False, "debug": True}
+    if not path.is_file():
+        return defaults
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+            return {**defaults, **data}
+    except Exception:
+        return defaults
+
+
+def save_settings(settings: dict) -> None:
+    try:
+        with open(get_settings_path(), "w") as f:
+            json.dump(settings, f, indent=4)
+    except Exception:
+        pass
 
 
 def draw_anti_aliased_round_rect(
@@ -113,6 +140,17 @@ def draw_window_control_icon(w: int, h: int, radius: int, fill_color: str, fg_co
         d = 10
         draw.line([cx - d, cy - d, cx + d, cy + d], fill=rgb + (255,), width=2)
         draw.line([cx + d, cy - d, cx - d, cy + d], fill=rgb + (255,), width=2)
+    elif symbol == "⚙":
+        # Anti-aliased settings gear icon (28px outer, 8 teeth, hollow center at 2x scale)
+        draw.ellipse([cx - 10, cy - 10, cx + 10, cy + 10], fill=rgb + (255,))
+        for i in range(8):
+            angle = i * (math.pi / 4)
+            tx1 = cx + 8 * math.cos(angle)
+            ty1 = cy + 8 * math.sin(angle)
+            tx2 = cx + 14 * math.cos(angle)
+            ty2 = cy + 14 * math.sin(angle)
+            draw.line([tx1, ty1, tx2, ty2], fill=rgb + (255,), width=4)
+        draw.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], fill=fill_color)
 
     return img.resize((w, h), Image.Resampling.LANCZOS)
 
@@ -274,7 +312,7 @@ class _CanvasButton(tk.Canvas):
         b_color = border_color if border_color is not None else self._border
 
         if HAS_PIL:
-            if self._text in ("─", "✕"):
+            if self._text in ("─", "✕", "⚙"):
                 fg = self._fg if fill == self._bg else "#ffffff"
                 img = draw_window_control_icon(w, h, self._radius, fill, fg, self._text)
                 self._btn_photo = ImageTk.PhotoImage(img)
@@ -298,6 +336,68 @@ class _CanvasButton(tk.Canvas):
     def set_enabled(self, on: bool) -> None:
         self._enabled = on
         self.configure(cursor="hand2" if on else "arrow")
+
+
+class _CanvasToggle(tk.Canvas):
+    def __init__(
+        self,
+        parent: tk.Misc,
+        command: Optional[Callable[[bool], None]] = None,
+        initial: bool = False,
+        parent_bg: str = BG,
+    ):
+        super().__init__(
+            parent, width=46, height=24,
+            highlightthickness=0, bd=0, bg=parent_bg, cursor="hand2",
+        )
+        self._value = initial
+        self._command = command
+        self._draw()
+        self.bind("<Button-1>", self._toggle)
+
+    def _draw(self) -> None:
+        self.delete("all")
+        w, h = 46, 24
+        r = h // 2
+
+        if self._value:
+            bg_color = "#8ab4f8"  # Blue accent brand color
+            dot_x = w - r
+            border_color = ""
+            border_w = 0
+        else:
+            bg_color = "#1e1e24"
+            dot_x = r
+            border_color = BORDER
+            border_w = 1
+
+        if HAS_PIL:
+            # Draw rounded capsule background
+            img = draw_anti_aliased_round_rect(w, h, r, bg_color, border_color, border_w)
+            self._bg_photo = ImageTk.PhotoImage(img)
+            self.create_image(w // 2, h // 2, image=self._bg_photo)
+
+            # Draw dot (perfect circle)
+            dot_size = 16
+            dot_img = draw_anti_aliased_round_rect(dot_size, dot_size, dot_size // 2, "#ffffff", "", 0)
+            self._dot_photo = ImageTk.PhotoImage(dot_img)
+            self.create_image(dot_x, h // 2, image=self._dot_photo)
+        else:
+            # Fallback standard shapes
+            if border_color:
+                _draw_round_rect(self, 0, 0, w, h, r, fill=bg_color, outline=border_color, width=border_w)
+            else:
+                _draw_round_rect(self, 0, 0, w, h, r, fill=bg_color, outline="", width=0)
+            self.create_oval(dot_x - 8, h // 2 - 8, dot_x + 8, h // 2 + 8, fill="#ffffff", outline="")
+
+    def _toggle(self, _event) -> None:
+        self._value = not self._value
+        self._draw()
+        if self._command:
+            self._command(self._value)
+
+    def get_value(self) -> bool:
+        return self._value
 
 
 class _EyebrowBadge(tk.Canvas):
@@ -335,6 +435,145 @@ class _EyebrowBadge(tk.Canvas):
         self.create_text(w // 2, h // 2, text=text, fill=MUTED, font=self._FONT)
 
 
+class SettingsWindow(tk.Toplevel):
+    def __init__(self, parent: BridgeApp):
+        super().__init__(parent)
+        self._parent = parent
+        self.title("Settings")
+        self.configure(bg=BG)
+        self.overrideredirect(True)
+        self._drag: Optional[tuple[int, int]] = None
+
+        # Center relative to parent
+        pw = parent.winfo_width()
+        ph = parent.winfo_height()
+        px = parent.winfo_x()
+        py = parent.winfo_y()
+
+        sw, sh = 360, 320
+        x = px + (pw - sw) // 2
+        y = py + (ph - sh) // 2
+        self.geometry(f"{sw}x{sh}+{x}+{y}")
+
+        self.grab_set()  # Make modal
+        self._build()
+        self._apply_rounded_corners()
+
+    def _apply_rounded_corners(self) -> None:
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                hwnd = win_shell.hwnd_from_tk(self)
+                if hwnd:
+                    rgn = ctypes.windll.gdi32.CreateRoundRectRgn(0, 0, 360 + 1, 320 + 1, 56, 56)
+                    ctypes.windll.user32.SetWindowRgn(hwnd, rgn, True)
+            except Exception:
+                pass
+
+    def _build(self) -> None:
+        sw, sh = 360, 320
+        self._bg_canvas = tk.Canvas(
+            self, width=sw, height=sh, bg=BG,
+            highlightthickness=0, bd=0,
+        )
+        self._bg_canvas.pack(fill="both", expand=True)
+
+        if HAS_PIL:
+            bg_img = draw_anti_aliased_round_rect(sw, sh, 28, BG, "#1f1f26", 1, inset=1)
+            self._bg_photo = ImageTk.PhotoImage(bg_img)
+            self._bg_canvas.create_image(0, 0, image=self._bg_photo, anchor="nw")
+            self._bg_canvas.bind("<ButtonPress-1>", self._drag_start)
+            self._bg_canvas.bind("<B1-Motion>", self._drag_move)
+        else:
+            self._border_frame = tk.Frame(self._bg_canvas, bg="#1f1f26")
+            self._border_frame.place(x=0, y=0, width=sw, height=sh)
+            container = tk.Frame(self._border_frame, bg=BG)
+            container.pack(fill="both", expand=True, padx=1, pady=1)
+
+        outer = tk.Frame(self._bg_canvas, bg=BG)
+        self._bg_canvas.create_window(
+            sw // 2, sh // 2, window=outer,
+            width=sw - 28 * 2,
+        )
+
+        header = tk.Frame(outer, bg=BG)
+        header.pack(fill="x", pady=(0, 20))
+
+        title_lbl = tk.Label(
+            header, text="Settings", fg=FG, bg=BG,
+            font=(FONT_SEMIBOLD, -18),
+        )
+        title_lbl.pack(side="left")
+
+        close_btn = _CanvasButton(
+            header, 32, 32, text="✕", radius=16, command=self.destroy,
+            bg=BG, fg=MUTED, hover_bg=BG_CLOSE_HOVER, border=None, parent_bg=BG,
+            font=(FONT_FAMILY, -14),
+        )
+        close_btn.pack(side="right")
+
+        rows_frame = tk.Frame(outer, bg=BG)
+        rows_frame.pack(fill="x", pady=(0, 20))
+
+        def add_setting_row(label_text: str, default_val: bool) -> _CanvasToggle:
+            row = tk.Frame(rows_frame, bg=BG)
+            row.pack(fill="x", pady=8)
+
+            lbl = tk.Label(
+                row, text=label_text, fg=FG, bg=BG,
+                font=(FONT_FAMILY, -14), anchor="w",
+            )
+            lbl.pack(side="left")
+
+            toggle = _CanvasToggle(row, initial=default_val)
+            toggle.pack(side="right")
+
+            for w in (row, lbl):
+                w.bind("<ButtonPress-1>", self._drag_start)
+                w.bind("<B1-Motion>", self._drag_move)
+
+            return toggle
+
+        settings = self._parent._settings
+        self._t1 = add_setting_row("Launch on Startup", settings.get("startup", False))
+        self._t2 = add_setting_row("Start Minimized", settings.get("minimized", False))
+        self._t3 = add_setting_row("Enable Debug Logging", settings.get("debug", True))
+
+        save_btn = _CanvasButton(
+            outer, sw - 28 * 2, ACTION_H, text="Save Settings", radius=ACTION_H // 2,
+            command=self._save_and_close,
+            bg=BG_BTN, fg=FG, hover_bg=BG_BTN_HOVER,
+            border=BORDER, hover_border=BORDER_HIGHLIGHT,
+            font=(FONT_SEMIBOLD, -14), parent_bg=BG,
+        )
+        save_btn.pack(fill="x")
+
+        # Allow dragging by clicking title or header frame
+        for w in (outer, header, title_lbl, rows_frame):
+            w.bind("<ButtonPress-1>", self._drag_start)
+            w.bind("<B1-Motion>", self._drag_move)
+
+    def _save_and_close(self) -> None:
+        new_settings = {
+            "startup": self._t1.get_value(),
+            "minimized": self._t2.get_value(),
+            "debug": self._t3.get_value(),
+        }
+        self._parent._settings = new_settings
+        save_settings(new_settings)
+        self.destroy()
+
+    def _drag_start(self, event) -> None:
+        self._drag = (event.x_root - self.winfo_x(), event.y_root - self.winfo_y())
+
+    def _drag_move(self, event) -> None:
+        if self._drag is None:
+            return
+        x = event.x_root - self._drag[0]
+        y = event.y_root - self._drag[1]
+        self.geometry(f"+{x}+{y}")
+
+
 class BridgeApp(tk.Toplevel):
     def __init__(self, master: tk.Tk):
         super().__init__(master)
@@ -348,6 +587,7 @@ class BridgeApp(tk.Toplevel):
         self._chrome: TrayChrome | None = None
         self._anim_frame = 0
         self._anim_id: Optional[str] = None
+        self._settings = load_settings()
 
         if sys.platform == "win32":
             self._chrome = TrayChrome(
@@ -482,6 +722,16 @@ class BridgeApp(tk.Toplevel):
         self._badge = _EyebrowBadge(badge_row, parent_bg=BG)
         self._badge.pack(anchor="center", pady=2)
 
+        # Settings button on the top left (hidden for now)
+        # settings_frame = tk.Frame(header, bg=BG)
+        # settings_frame.place(relx=0.0, rely=0.0, anchor="nw", y=2)
+        # _CanvasButton(
+        #     settings_frame, 32, 32, text="⚙", radius=16, command=self._open_settings,
+        #     bg=BG, fg=MUTED, hover_bg=BG_WIN_HOVER, border=None, parent_bg=BG,
+        #     font=(FONT_FAMILY, -14),
+        # ).pack(side="left")
+
+        # Control buttons on the top right
         controls = tk.Frame(header, bg=BG)
         controls.place(relx=1.0, rely=0.0, anchor="ne", y=2)
         _CanvasButton(
@@ -537,6 +787,9 @@ class BridgeApp(tk.Toplevel):
             font=(FONT_SEMIBOLD, -14), parent_bg=BG,
         )
         self._action.pack(side="top", fill="x", pady=(20, 0))
+
+    def _open_settings(self) -> None:
+        SettingsWindow(self)
 
     def _queue_status(self, state: str, detail: str = "") -> None:
         self.after(0, lambda: self._apply_status(state, detail))

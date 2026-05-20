@@ -30,12 +30,6 @@ def hwnd_from_tk(window: tk.Misc) -> int:
         return parent
     return wid
 
-def hwnd_from_qwidget(widget) -> int:
-    wh = widget.windowHandle()
-    if wh is not None:
-        return int(wh.winId())
-    return int(widget.winId())
-
 def hide_window(hwnd: int) -> None:
     import ctypes
     ctypes.windll.user32.ShowWindow(hwnd, 0)

@@ -1,6 +1,0 @@
-# Fancy UI — install before running Switch2Bridge.exe (Fancy build)
-bleak>=0.21
-vgamepad>=0.1.0
-pystray>=0.19
-Pillow>=10.0
-PySide6>=6.6

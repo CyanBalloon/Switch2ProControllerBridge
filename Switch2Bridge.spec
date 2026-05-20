@@ -1,5 +1,5 @@
-# Small onefile .exe (Lite / Tkinter — no pywebview / WebView2).
-# Run: pyinstaller Switch2Bridge-lite.spec --noconfirm --clean
+# Onefile .exe (Tkinter UI).
+# Run: pyinstaller Switch2Bridge.spec --noconfirm --clean
 
 from pathlib import Path
 

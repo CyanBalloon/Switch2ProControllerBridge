@@ -1,3 +1,2 @@
-# Build tools (install only when creating the .exe package)
 -r requirements.txt
 pyinstaller>=6.3

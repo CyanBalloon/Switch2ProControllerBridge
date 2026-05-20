@@ -1,4 +1,4 @@
-"""Shared bridge lifecycle for GUI backends (Qt, Tkinter, etc.)."""
+"""Shared bridge lifecycle for Lite and Fancy GUI hosts."""
 
 from __future__ import annotations
 

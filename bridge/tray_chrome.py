@@ -1,5 +1,5 @@
 """
-System tray + taskbar-button behavior shared by Tk and Qt GUIs.
+System tray + taskbar-button behavior shared by Lite and Fancy GUIs.
 
 - **Taskbar button** (by Start): while the main window is open.
 - **System tray icon** (notification area): always while the app runs.

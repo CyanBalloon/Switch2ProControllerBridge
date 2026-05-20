@@ -12,13 +12,14 @@ _BRIDGE_LOG = logging.getLogger("switch2_bridge")
 _LOGGING_READY = False
 
 
-def setup_logging() -> Path:
+def setup_logging():
     """Write DEBUG logs to logs/bridge.log; mirror INFO+ to console when present."""
     global _LOGGING_READY
     if _LOGGING_READY:
         return LOG_FILE
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_FILE.write_text("", encoding="utf-8")
     _BRIDGE_LOG.setLevel(logging.DEBUG)
     _BRIDGE_LOG.handlers.clear()
 

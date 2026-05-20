@@ -1,8 +1,8 @@
+# Core runtime (Tk GUI and bridge). Install: pip install -r requirements.txt
 bleak>=0.21
 vgamepad>=0.1.0
-PySide6>=6.6
 pystray>=0.19
 Pillow>=10.0
 
-# Optional (alternative host MAC source):
+# Optional (alternate host Bluetooth MAC lookup):
 # pybluez

@@ -86,6 +86,12 @@ body[data-state="error"] {
   justify-content: center;
   margin-bottom: 28px;
   cursor: default;
+  -webkit-app-region: drag;
+}
+
+.card-controls,
+.card-controls button {
+  -webkit-app-region: no-drag;
 }
 
 .card-controls {
@@ -140,7 +146,7 @@ body[data-state="error"] {
   opacity: 0.5;
 }
 
-/* ── Controller visual (switch-controller-html.png) ── */
+/* ── Controller visual (switch-controller-fancy.png) ── */
 .visual-stage {
   position: relative;
   width: 200px;
@@ -194,11 +200,11 @@ body[data-state="connected"] .halo {
   height: 100%;
   z-index: 2;
   background-color: var(--text-muted);
-  -webkit-mask-image: url("switch-controller-html.png");
+  -webkit-mask-image: url("switch-controller-fancy.png");
   -webkit-mask-size: contain;
   -webkit-mask-position: center;
   -webkit-mask-repeat: no-repeat;
-  mask-image: url("switch-controller-html.png");
+  mask-image: url("switch-controller-fancy.png");
   mask-size: contain;
   mask-position: center;
   mask-repeat: no-repeat;

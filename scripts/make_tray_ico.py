@@ -1,4 +1,4 @@
-"""Build ui/tray.ico from ui/switch-controller.png (stdlib + tkinter only)."""
+"""Build ui/tray.ico from ui/switch-controller-fancy.png (stdlib + tkinter only)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import tkinter as tk
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PNG = ROOT / "ui" / "switch-controller.png"
+PNG = ROOT / "ui" / "switch-controller-fancy.png"
 ICO = ROOT / "ui" / "tray.ico"
 SIZE = 16
 

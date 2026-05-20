@@ -1,4 +1,4 @@
-# Build a single Switch2Bridge.exe (large; see BUILD.md).
+# Build dist/Switch2Bridge.exe - Lite build.
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
@@ -8,8 +8,8 @@ python -m pip install -r requirements-build.txt
 
 Get-Process Switch2Bridge -ErrorAction SilentlyContinue | Stop-Process -Force
 
-Write-Host "Building onefile exe..."
-python -m PyInstaller Switch2Bridge-onefile.spec --noconfirm --clean
+Write-Host "Building Lite onefile exe..."
+python -m PyInstaller Switch2Bridge-lite.spec --noconfirm --clean
 
 $Exe = Join-Path $Root "dist\Switch2Bridge.exe"
 if (-not (Test-Path $Exe)) {
@@ -19,4 +19,4 @@ if (-not (Test-Path $Exe)) {
 $mb = [math]::Round((Get-Item $Exe).Length / 1MB, 1)
 Write-Host ""
 Write-Host "Done: $Exe  ($mb MB)"
-Write-Host "Note: Under 20 MB is not possible with the WebEngine UI."
+Write-Host "This build needs only ViGEmBus on the target PC (no WebView2)."

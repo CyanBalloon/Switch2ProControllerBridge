@@ -1,4 +1,4 @@
-"""Status copy shared by native GUIs (tray tooltip, Tk labels). HTML uses ui/app.js."""
+"""Status strings — Lite labels and tray tooltips (Fancy copy in ui/app.js)."""
 
 from __future__ import annotations
 

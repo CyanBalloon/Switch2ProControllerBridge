@@ -1,16 +1,17 @@
-"""Windows shell helpers — taskbar button, icons, show/hide (shared by Tk and Qt)."""
+"""Windows shell helpers — taskbar button, icons, show/hide."""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from bridge.paths import tray_ico_path
 
-if TYPE_CHECKING:
-    import tkinter as tk
-    from PySide6.QtWidgets import QWidget
+if sys.version_info >= (3, 10):
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        import tkinter as tk
 
 
 def hwnd_from_tk(window: "tk.Misc") -> int:
@@ -31,7 +32,7 @@ def hwnd_from_tk(window: "tk.Misc") -> int:
     return wid
 
 
-def hwnd_from_qwidget(widget: "QWidget") -> int:
+def hwnd_from_qwidget(widget) -> int:
     wh = widget.windowHandle()
     if wh is not None:
         return int(wh.winId())

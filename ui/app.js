@@ -1,5 +1,6 @@
 /**
- * Bridge UI — called from Python via window.bridgeUI.setStatus(state, detail)
+ * Bridge UI — Python calls window.bridgeUI.setStatus(state, detail)
+ * Controls call bridge via QWebChannel (see gui.py).
  */
 
 const COPY = {
@@ -55,7 +56,6 @@ window.bridgeUI = {
     btn.textContent = c.btn;
     btn.disabled = state === "closing";
   },
-
 };
 
 function onActionClick() {
@@ -76,9 +76,7 @@ function bindControls() {
   $("btn-close")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (pyBridge) {
-      pyBridge.closeApp();
-    }
+    if (pyBridge) pyBridge.closeApp();
   });
   $("btn-min")?.addEventListener("click", () => {
     if (pyBridge) pyBridge.minimize();

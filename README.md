@@ -9,11 +9,12 @@ Use your **Switch 2 Pro** on PC as an **Xbox 360** controller for games.
 
 ## Setup and Running
 
-1. Unzip the package.
-2. Run **`Switch2Bridge.exe`**.
-3. In the app, click **Scan** (or start scanning).
-4. **First time:** hold **SYNC** on the controller until the LEDs flash.
-5. **Next time:** press any button on the controller to connect.
+1. **[Download the latest release](https://github.com/CyanBalloon/Switch2ProControllerBridge/releases)**.
+2. Unzip the package.
+3. Run **`Switch2Bridge.exe`**.
+4. In the app, click **Scan** (or start scanning).
+5. **First time:** hold **SYNC** on the controller until the LEDs flash.
+6. **Next time:** press any button on the controller to connect.
 
 Nothing else to install.
 

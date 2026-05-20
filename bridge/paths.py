@@ -22,3 +22,8 @@ def install_root() -> Path:
     if is_frozen():
         return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parent.parent
+
+
+def tray_ico_path() -> Path:
+    """Shared .ico for system tray and taskbar."""
+    return bundle_root() / "ui" / "tray.ico"

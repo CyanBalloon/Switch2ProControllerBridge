@@ -2,7 +2,7 @@
 """
 Switch 2 Pro Controller → Virtual Xbox 360 Controller Bridge
 ============================================================
-Entry point. GUI lives in gui.py (replace that file to reskin the app).
+Entry point. GUI: ``python main.py --tk`` (small) or ``--qt`` (HTML/CSS, needs PySide6).
 
 Requirements:
     pip install hidapi vgamepad bleak
@@ -21,7 +21,14 @@ from bridge.utils import subprocess_hide_window
 
 
 def run_app():
-    """Launch the GUI (import here so gui.py / ui/ can be swapped freely)."""
+    """Launch GUI — Tkinter with ``--tk`` or frozen build; Qt WebEngine with ``--qt``."""
+    from bridge.paths import is_frozen
+
+    if "--tk" in sys.argv or (is_frozen() and "--qt" not in sys.argv):
+        import gui_tk
+        gui_tk.launch()
+        return
+
     import gui
     if hasattr(gui, "launch"):
         gui.launch()
@@ -54,4 +61,8 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"\n✗  Unexpected error: {exc}")
         traceback.print_exc()
-        input("\nPress Enter to close…")
+        if not is_frozen() and sys.stdin is not None:
+            try:
+                input("\nPress Enter to close…")
+            except (EOFError, RuntimeError):
+                pass

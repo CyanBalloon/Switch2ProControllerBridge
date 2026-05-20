@@ -2,17 +2,15 @@
 
 The app is packaged with **PyInstaller**. No Python install required on the target PC.
 
-## Can I get a single `.exe` under 20 MB?
+## GUI options
 
-| Goal | Possible with current app? |
-|------|----------------------------|
-| **One folder, click `Switch2Bridge.exe`** | Yes — `Switch2Bridge.spec` (recommended) |
-| **Single `.exe` only (no folder)** | Yes — `Switch2Bridge-onefile.spec`, but expect **~80–150 MB** |
-| **Under 20 MB** | **No**, not with the current **HTML + Qt WebEngine** UI |
+| Mode | Run | Package |
+|------|-----|---------|
+| **Tkinter (small)** | `python main.py --tk` | `Switch2Bridge-tk.spec` → one `.exe` (~20–40 MB) |
+| **HTML / Qt (pretty)** | `python main.py --qt` | `Switch2Bridge-onefile.spec` (~80–150 MB) |
+| **HTML folder build** | `python main.py --qt` | `Switch2Bridge.spec` |
 
-The UI uses **Qt WebEngine** (embedded Chromium). That runtime alone is tens to hundreds of MB. A sub‑20 MB build would require **replacing the GUI** (e.g. native Tkinter) and dropping the `ui/` HTML/CSS stack.
-
-If you want to pursue an under-20 MB build later, we can add a lightweight Tkinter host; you would lose file-based HTML reskinning.
+Frozen builds from `Switch2Bridge-tk.spec` use Tkinter by default. Reskin the Tk UI in `gui_tk.py` (colors in `COPY` / `ACCENT` dicts).
 
 ## Prerequisites (build machine only)
 
@@ -28,14 +26,26 @@ If you want to pursue an under-20 MB build later, we can add a lightweight Tkint
 .\scripts\build.ps1
 ```
 
-**Single `.exe` (no `_internal` folder):**
+**Small single `.exe` (Tkinter, recommended for size):**
 
-```powershell
-pip install -r requirements-build.txt
-pyinstaller Switch2Bridge-onefile.spec --noconfirm --clean
+```bat
+build-tk.bat
 ```
 
-Output: `dist/Switch2Bridge.exe`
+Or from PowerShell (if scripts are allowed): `.\scripts\build-tk.ps1`
+
+If PowerShell blocks scripts, use the `.bat` file or run:
+
+```bat
+python -m pip install -r requirements-build.txt
+python -m PyInstaller Switch2Bridge-tk.spec --noconfirm --clean
+```
+
+**Large single `.exe` (HTML / Qt WebEngine):**
+
+```powershell
+pyinstaller Switch2Bridge-onefile.spec --noconfirm --clean
+```
 
 Or manually for folder build:
 

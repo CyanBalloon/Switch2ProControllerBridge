@@ -2,12 +2,12 @@
 
 Windows app that connects a **Switch 2 Pro** controller over Bluetooth and exposes it as a **virtual Xbox 360** controller (ViGEm).
 
+BLE pairing and protocol code in `bridge/` is derived from [Nadeflore/switch2-controllers](https://github.com/Nadeflore/switch2-controllers) and [TommyWabg/switch2-controllers-windows10-gyro](https://github.com/TommyWabg/switch2-controllers-windows10-gyro). See [ATTRIBUTION.md](ATTRIBUTION.md) for file-level mapping and license notes.
+
 | UI | Run from source | Build | `.exe` size | Packages |
 |----|-----------------|-------|-------------|----------|
 | **Lite** | `python main.py` | `build-lite.bat` | ~20-40 MB | **bundled** in exe |
 | **Fancy** | `python main.py --fancy` | `build.bat` | ~8-15 MB | **user `pip install`** (same Python version) |
-
-Both builds produce a **single `Switch2Bridge.exe`**. The Fancy build does **not** create an `app/` folder when you run it.
 
 ## Fancy `.exe` — how it works
 

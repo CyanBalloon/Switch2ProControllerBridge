@@ -29,6 +29,7 @@ class BridgeContext:
     scan_enabled: threading.Event = field(default_factory=threading.Event)
     session_done: Optional[asyncio.Event] = None
     active_client: Optional[BleakClient] = None
+    settings: dict = field(default_factory=dict)
 
     def __post_init__(self):
         self.scan_enabled.set()
@@ -177,7 +178,7 @@ async def discover_and_run(
 
                     _status("connected", device_address)
                     try:
-                        controller = Switch2Controller(client, gamepad)
+                        controller = Switch2Controller(client, gamepad, ctx.settings)
                         await controller.start(gamepad=gamepad, connect_mode=connect_mode)
                         await session_done.wait()
                     finally:

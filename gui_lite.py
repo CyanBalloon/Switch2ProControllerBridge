@@ -59,7 +59,13 @@ def get_settings_path() -> Path:
 
 def load_settings() -> dict:
     path = get_settings_path()
-    defaults = {"startup": False, "minimized": False, "debug": True}
+    defaults = {
+        "startup": False,
+        "minimized": False,
+        "debug": True,
+        "bind_gl": "None",
+        "bind_gr": "None",
+    }
     if not path.is_file():
         return defaults
     try:
@@ -450,7 +456,7 @@ class SettingsWindow(tk.Toplevel):
         px = parent.winfo_x()
         py = parent.winfo_y()
 
-        sw, sh = 360, 320
+        sw, sh = 360, 440
         x = px + (pw - sw) // 2
         y = py + (ph - sh) // 2
         self.geometry(f"{sw}x{sh}+{x}+{y}")
@@ -465,13 +471,13 @@ class SettingsWindow(tk.Toplevel):
                 import ctypes
                 hwnd = win_shell.hwnd_from_tk(self)
                 if hwnd:
-                    rgn = ctypes.windll.gdi32.CreateRoundRectRgn(0, 0, 360 + 1, 320 + 1, 56, 56)
+                    rgn = ctypes.windll.gdi32.CreateRoundRectRgn(0, 0, 360 + 1, 440 + 1, 56, 56)
                     ctypes.windll.user32.SetWindowRgn(hwnd, rgn, True)
             except Exception:
                 pass
 
     def _build(self) -> None:
-        sw, sh = 360, 320
+        sw, sh = 360, 440
         self._bg_canvas = tk.Canvas(
             self, width=sw, height=sh, bg=BG,
             highlightthickness=0, bd=0,
@@ -497,7 +503,7 @@ class SettingsWindow(tk.Toplevel):
         )
 
         header = tk.Frame(outer, bg=BG)
-        header.pack(fill="x", pady=(0, 20))
+        header.pack(fill="x", pady=(0, 15))
 
         title_lbl = tk.Label(
             header, text="Settings", fg=FG, bg=BG,
@@ -513,11 +519,11 @@ class SettingsWindow(tk.Toplevel):
         close_btn.pack(side="right")
 
         rows_frame = tk.Frame(outer, bg=BG)
-        rows_frame.pack(fill="x", pady=(0, 20))
+        rows_frame.pack(fill="x", pady=(0, 15))
 
         def add_setting_row(label_text: str, default_val: bool) -> _CanvasToggle:
             row = tk.Frame(rows_frame, bg=BG)
-            row.pack(fill="x", pady=8)
+            row.pack(fill="x", pady=6)
 
             lbl = tk.Label(
                 row, text=label_text, fg=FG, bg=BG,
@@ -534,10 +540,43 @@ class SettingsWindow(tk.Toplevel):
 
             return toggle
 
+        def add_binding_row(label_text: str, current_val: str) -> tk.StringVar:
+            row = tk.Frame(rows_frame, bg=BG)
+            row.pack(fill="x", pady=6)
+
+            lbl = tk.Label(
+                row, text=label_text, fg=FG, bg=BG,
+                font=(FONT_FAMILY, -14), anchor="w",
+            )
+            lbl.pack(side="left")
+
+            var = tk.StringVar(value=current_val)
+            options = ["None", "A", "B", "X", "Y", "LB", "RB", "LT", "RT", "LS", "RS", "DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT", "START", "BACK", "GUIDE"]
+            
+            option_menu = tk.OptionMenu(row, var, *options)
+            option_menu.config(
+                bg=BG_BTN, fg=FG, activebackground=BG_BTN_HOVER, activeforeground=FG,
+                highlightthickness=0, bd=0, font=(FONT_FAMILY, -12),
+                width=12, anchor="center", cursor="hand2"
+            )
+            option_menu["menu"].config(
+                bg=BG, fg=FG, activebackground="#8ab4f8", activeforeground=BG,
+                font=(FONT_FAMILY, -12), bd=0
+            )
+            option_menu.pack(side="right")
+
+            for w in (row, lbl):
+                w.bind("<ButtonPress-1>", self._drag_start)
+                w.bind("<B1-Motion>", self._drag_move)
+
+            return var
+
         settings = self._parent._settings
         self._t1 = add_setting_row("Launch on Startup", settings.get("startup", False))
         self._t2 = add_setting_row("Start Minimized", settings.get("minimized", False))
         self._t3 = add_setting_row("Enable Debug Logging", settings.get("debug", True))
+        self._gl_var = add_binding_row("Bind GL Button", settings.get("bind_gl", "None"))
+        self._gr_var = add_binding_row("Bind GR Button", settings.get("bind_gr", "None"))
 
         save_btn = _CanvasButton(
             outer, sw - 28 * 2, ACTION_H, text="Save Settings", radius=ACTION_H // 2,
@@ -558,9 +597,12 @@ class SettingsWindow(tk.Toplevel):
             "startup": self._t1.get_value(),
             "minimized": self._t2.get_value(),
             "debug": self._t3.get_value(),
+            "bind_gl": self._gl_var.get(),
+            "bind_gr": self._gr_var.get(),
         }
         self._parent._settings = new_settings
         save_settings(new_settings)
+        self._parent._host._ctx.settings.update(new_settings)
         self.destroy()
 
     def _drag_start(self, event) -> None:
@@ -601,6 +643,7 @@ class BridgeApp(tk.Toplevel):
             )
 
         self._host = BridgeHost(self._queue_status)
+        self._host._ctx.settings = dict(self._settings)
         self._build()
         self._fit_window()
         self.protocol("WM_DELETE_WINDOW", self._on_wm_delete)
@@ -722,14 +765,14 @@ class BridgeApp(tk.Toplevel):
         self._badge = _EyebrowBadge(badge_row, parent_bg=BG)
         self._badge.pack(anchor="center", pady=2)
 
-        # Settings button on the top left (hidden for now)
-        # settings_frame = tk.Frame(header, bg=BG)
-        # settings_frame.place(relx=0.0, rely=0.0, anchor="nw", y=2)
-        # _CanvasButton(
-        #     settings_frame, 32, 32, text="⚙", radius=16, command=self._open_settings,
-        #     bg=BG, fg=MUTED, hover_bg=BG_WIN_HOVER, border=None, parent_bg=BG,
-        #     font=(FONT_FAMILY, -14),
-        # ).pack(side="left")
+        # Settings button on the top left
+        settings_frame = tk.Frame(header, bg=BG)
+        settings_frame.place(relx=0.0, rely=0.0, anchor="nw", y=2)
+        _CanvasButton(
+            settings_frame, 32, 32, text="⚙", radius=16, command=self._open_settings,
+            bg=BG, fg=MUTED, hover_bg=BG_WIN_HOVER, border=None, parent_bg=BG,
+            font=(FONT_FAMILY, -14),
+        ).pack(side="left")
 
         # Control buttons on the top right
         controls = tk.Frame(header, bg=BG)

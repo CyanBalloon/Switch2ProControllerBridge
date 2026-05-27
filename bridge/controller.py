@@ -41,9 +41,10 @@ class StickCalibration:
 class Switch2Controller:
     """Manages BLE connection to one Switch 2 Pro Controller → virtual Xbox 360 pad."""
 
-    def __init__(self, client: BleakClient, gamepad: vg.VX360Gamepad):
+    def __init__(self, client: BleakClient, gamepad: vg.VX360Gamepad, settings: dict):
         self.client = client
         self.gamepad = gamepad
+        self.settings = settings if settings is not None else {}
         self._response_future = None
         self._left_cal = None
         self._right_cal = None
@@ -155,6 +156,24 @@ class Switch2Controller:
         (BTN_RS, vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_THUMB),
     ]
 
+    XBOX_MAP = {
+        "A": vg.XUSB_BUTTON.XUSB_GAMEPAD_A,
+        "B": vg.XUSB_BUTTON.XUSB_GAMEPAD_B,
+        "X": vg.XUSB_BUTTON.XUSB_GAMEPAD_X,
+        "Y": vg.XUSB_BUTTON.XUSB_GAMEPAD_Y,
+        "LB": vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER,
+        "RB": vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER,
+        "LS": vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_THUMB,
+        "RS": vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_THUMB,
+        "DPAD_UP": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP,
+        "DPAD_DOWN": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN,
+        "DPAD_LEFT": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT,
+        "DPAD_RIGHT": vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT,
+        "START": vg.XUSB_BUTTON.XUSB_GAMEPAD_START,
+        "BACK": vg.XUSB_BUTTON.XUSB_GAMEPAD_BACK,
+        "GUIDE": vg.XUSB_BUTTON.XUSB_GAMEPAD_GUIDE,
+    }
+
     def _on_input(self, _sender: BleakGATTCharacteristic, data: bytearray):
         if len(data) < 16:
             return
@@ -178,14 +197,35 @@ class Switch2Controller:
             rx = deadzone((raw_right[0] / 2047.5) - 1.0)
             ry = deadzone((raw_right[1] / 2047.5) - 1.0)
 
+        bind_gl = self.settings.get("bind_gl", "None")
+        bind_gr = self.settings.get("bind_gr", "None")
+
+        gl_pressed = bool(buttons & 0x02000000)
+        gr_pressed = bool(buttons & 0x01000000)
+
+        pressed_buttons = set()
         for sw_mask, xbox_btn in self.BUTTON_MAP:
             if buttons & sw_mask:
+                pressed_buttons.add(xbox_btn)
+
+        if gl_pressed and bind_gl in self.XBOX_MAP:
+            pressed_buttons.add(self.XBOX_MAP[bind_gl])
+        if gr_pressed and bind_gr in self.XBOX_MAP:
+            pressed_buttons.add(self.XBOX_MAP[bind_gr])
+
+        all_possible_buttons = set(xbox_btn for _, xbox_btn in self.BUTTON_MAP) | set(self.XBOX_MAP.values())
+
+        for xbox_btn in all_possible_buttons:
+            if xbox_btn in pressed_buttons:
                 self.gamepad.press_button(button=xbox_btn)
             else:
                 self.gamepad.release_button(button=xbox_btn)
 
-        self.gamepad.left_trigger(value=255 if (buttons & BTN_ZL) else 0)
-        self.gamepad.right_trigger(value=255 if (buttons & BTN_ZR) else 0)
+        lt_pressed = bool(buttons & BTN_ZL) or (gl_pressed and bind_gl == "LT") or (gr_pressed and bind_gr == "LT")
+        rt_pressed = bool(buttons & BTN_ZR) or (gl_pressed and bind_gr == "RT") or (gr_pressed and bind_gr == "RT")
+
+        self.gamepad.left_trigger(value=255 if lt_pressed else 0)
+        self.gamepad.right_trigger(value=255 if rt_pressed else 0)
 
         def to_short(v):
             return int(max(-32768, min(32767, v * 32767)))
